@@ -1,0 +1,33 @@
+import { motion } from 'framer-motion';
+import ProductCard from './ProductCard';
+import { products } from '@/data/products';
+
+const ProductsSection = () => {
+  return (
+    <section id="products" className="py-24 px-6">
+      <div className="container mx-auto max-w-5xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <p className="text-sm uppercase tracking-[0.3em] text-primary font-medium mb-3">
+            The Collection
+          </p>
+          <h2 className="text-4xl md:text-5xl font-heading uppercase">
+            Pick Your <span className="text-gradient-brand">Craving</span>
+          </h2>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {products.map((product, i) => (
+            <ProductCard key={product.id} product={product} index={i} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default ProductsSection;
