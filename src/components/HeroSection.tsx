@@ -4,7 +4,7 @@ import heroMobile from '@/assets/hero-mobile.png';
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-end justify-center overflow-hidden pt-16">
       {/* Desktop Background */}
       <div className="absolute inset-0 hidden md:block">
         <img
