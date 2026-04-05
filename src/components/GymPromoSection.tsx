@@ -19,26 +19,26 @@ const promos = [
 
 const GymPromoSection = () => {
   return (
-    <section className="py-24 px-6 bg-[hsl(var(--surface-dark))]">
+    <section className="py-16 md:py-24 px-4 sm:px-6 bg-[hsl(var(--surface-dark))]">
       <div className="container mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10 md:mb-16"
         >
-          <p className="text-sm uppercase tracking-[0.3em] text-primary font-medium mb-3">
+          <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary font-medium mb-3">
             Built For The Gym
           </p>
-          <h2 className="text-4xl md:text-5xl font-heading uppercase text-[hsl(var(--surface-warm))]">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading uppercase text-[hsl(var(--surface-warm))]">
             Fuel Your <span className="text-gradient-brand">Beast Mode</span>
           </h2>
-          <p className="mt-4 text-[hsl(var(--muted-foreground))] max-w-xl mx-auto">
+          <p className="mt-3 text-sm text-[hsl(var(--muted-foreground))] max-w-xl mx-auto">
             Real protein. Real ingredients. The bar that keeps up with your grind.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {promos.map((promo, i) => (
             <motion.div
               key={promo.title}
@@ -55,14 +55,14 @@ const GymPromoSection = () => {
                 loading="lazy"
               />
               {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 md:p-8">
-                <span className="inline-block w-fit px-3 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs font-bold uppercase tracking-wider mb-3">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 sm:p-6 md:p-8">
+                <span className="inline-block w-fit px-3 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3">
                   {promo.stat}
                 </span>
-                <h3 className="font-heading text-2xl md:text-3xl uppercase text-[hsl(var(--surface-warm))]">
+                <h3 className="font-heading text-xl sm:text-2xl md:text-3xl uppercase text-[hsl(var(--surface-warm))]">
                   {promo.title}
                 </h3>
-                <p className="text-sm text-[hsl(var(--surface-warm)/.7)] mt-1">
+                <p className="text-xs sm:text-sm text-[hsl(var(--surface-warm)/.7)] mt-1">
                   {promo.tagline}
                 </p>
               </div>
