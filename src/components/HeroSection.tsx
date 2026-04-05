@@ -35,7 +35,7 @@ const HeroSection = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.6 }}
-        className="relative z-10 w-full mb-[6vh] flex justify-center md:justify-start md:pl-[15%] md:mb-[8vh]"
+        className="relative z-10 w-full mb-[6vh] flex justify-center md:justify-start md:pl-[22%] md:mb-[6vh]"
       >
         <a
           href="#products"
