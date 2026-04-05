@@ -4,13 +4,16 @@ import heroMobile from '@/assets/hero-mobile.png';
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-end overflow-hidden">
+      {/* Spacer for fixed navbar */}
+      <div className="absolute inset-0 top-0 h-16" />
+
       {/* Desktop Background */}
       <div className="absolute inset-0 hidden md:block">
         <img
           src={heroBg}
           alt="Theoryy Protein Bars"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-top"
           width={1920}
           height={1080}
         />
@@ -27,12 +30,12 @@ const HeroSection = () => {
         />
       </div>
 
-      {/* Shop Now Button - positioned below the text area */}
+      {/* Shop Now Button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.6 }}
-        className="relative z-10 mt-[55vh] md:mt-[10vh] md:mr-[30%] flex flex-col items-center gap-4"
+        className="relative z-10 w-full mb-[6vh] flex justify-center md:justify-start md:pl-[22%] md:mb-[6vh]"
       >
         <a
           href="#products"
