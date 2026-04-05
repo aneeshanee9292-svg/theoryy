@@ -4,7 +4,7 @@ import heroMobile from '@/assets/hero-mobile.png';
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-end justify-center overflow-hidden pb-16 md:pb-24">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Desktop Background */}
       <div className="absolute inset-0 hidden md:block">
         <img
@@ -14,7 +14,6 @@ const HeroSection = () => {
           width={1920}
           height={1080}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
       </div>
 
       {/* Mobile Background */}
@@ -22,31 +21,24 @@ const HeroSection = () => {
         <img
           src={heroMobile}
           alt="Theoryy Protein Bars"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-top"
           width={800}
           height={1400}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
       </div>
 
-      {/* Buttons */}
+      {/* Shop Now Button - positioned below the text area */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.6 }}
-        className="relative z-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center w-full px-6 sm:px-0 max-w-sm sm:max-w-none mx-auto"
+        transition={{ delay: 0.6, duration: 0.6 }}
+        className="relative z-10 mt-[55vh] md:mt-[10vh] md:mr-[30%] flex flex-col items-center gap-4"
       >
         <a
           href="#products"
-          className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-sm hover:scale-105 transition-transform animate-pulse-glow"
+          className="inline-flex items-center justify-center px-10 py-4 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-sm hover:scale-105 transition-transform animate-pulse-glow shadow-lg"
         >
           Shop Now
-        </a>
-        <a
-          href="#story"
-          className="inline-flex items-center justify-center px-8 py-4 rounded-full border border-foreground/20 text-foreground font-medium uppercase tracking-wider text-sm hover:bg-foreground/5 transition-colors"
-        >
-          Our Story
         </a>
       </motion.div>
     </section>
