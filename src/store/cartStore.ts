@@ -6,6 +6,7 @@ export interface Product {
   flavor: string;
   price: number;
   image: string;
+  images?: string[];
   theme: 'red' | 'purple';
   description: string;
   protein: string;

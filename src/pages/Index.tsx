@@ -3,6 +3,7 @@ import HeroSection from '@/components/HeroSection';
 import ProductsSection from '@/components/ProductsSection';
 import IngredientsSection from '@/components/IngredientsSection';
 import GymPromoSection from '@/components/GymPromoSection';
+import WheyPromoSection from '@/components/WheyPromoSection';
 import BenefitsSection from '@/components/BenefitsSection';
 import StorySection from '@/components/StorySection';
 import Footer from '@/components/Footer';
@@ -14,6 +15,7 @@ const Index = () => {
       <Navbar />
       <HeroSection />
       <ProductsSection />
+      <WheyPromoSection />
       <IngredientsSection />
       <GymPromoSection />
       <BenefitsSection />

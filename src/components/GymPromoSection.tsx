@@ -54,18 +54,6 @@ const GymPromoSection = () => {
                 className="w-full h-auto object-cover"
                 loading="lazy"
               />
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 sm:p-6 md:p-8">
-                <span className="inline-block w-fit px-3 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3">
-                  {promo.stat}
-                </span>
-                <h3 className="font-heading text-xl sm:text-2xl md:text-3xl uppercase text-[hsl(var(--surface-warm))]">
-                  {promo.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-[hsl(var(--surface-warm)/.7)] mt-1">
-                  {promo.tagline}
-                </p>
-              </div>
             </motion.div>
           ))}
         </div>
