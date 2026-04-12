@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Product } from '@/store/cartStore';
 import { useCartStore } from '@/store/cartStore';
-import { ShoppingBag, Zap } from 'lucide-react';
+import { ShoppingBag, Zap, Plus, Minus } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -10,6 +10,11 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, index }: ProductCardProps) => {
   const addItem = useCartStore((s) => s.addItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const items = useCartStore((s) => s.items);
+
+  const cartItem = items.find((i) => i.product.id === product.id);
+  const quantity = cartItem ? cartItem.quantity : 0;
 
   return (
     <motion.div
@@ -53,15 +58,55 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
         <div className="flex items-center justify-between">
           <span className="text-xl sm:text-2xl font-bold">₹{product.price}</span>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
-            onClick={() => addItem(product)}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm uppercase tracking-wide transition-shadow hover:shadow-lg"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            Add
-          </motion.button>
+
+          <AnimatePresence mode="wait">
+            {quantity === 0 ? (
+              <motion.button
+                key="add-btn"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => addItem(product)}
+                className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm uppercase tracking-wide transition-shadow hover:shadow-lg"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Add
+              </motion.button>
+            ) : (
+              <motion.div
+                key="qty-stepper"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="flex items-center gap-1 rounded-full bg-primary overflow-hidden"
+              >
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => updateQuantity(product.id, quantity - 1)}
+                  className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-primary-foreground hover:bg-white/10 transition-colors"
+                >
+                  <Minus className="w-4 h-4" />
+                </motion.button>
+                <motion.span
+                  key={quantity}
+                  initial={{ y: -12, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="w-6 text-center text-sm font-bold text-primary-foreground select-none"
+                >
+                  {quantity}
+                </motion.span>
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => addItem(product)}
+                  className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-primary-foreground hover:bg-white/10 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>

@@ -28,6 +28,7 @@ interface CartStore {
   setCartOpen: (open: boolean) => void;
   totalItems: () => number;
   totalPrice: () => number;
+  getItemQuantity: (productId: string) => number;
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
@@ -61,4 +62,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
   setCartOpen: (open) => set({ isOpen: open }),
   totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
   totalPrice: () => get().items.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
+  getItemQuantity: (productId) => {
+    const item = get().items.find((i) => i.product.id === productId);
+    return item ? item.quantity : 0;
+  },
 }));

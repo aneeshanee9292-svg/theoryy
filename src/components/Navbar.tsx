@@ -1,11 +1,12 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import logo from '@/assets/theoryy-logo.png';
 
 const Navbar = () => {
   const toggleCart = useCartStore((s) => s.toggleCart);
-  const totalItems = useCartStore((s) => s.totalItems);
+  const items = useCartStore((s) => s.items);
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
     <motion.nav
@@ -36,15 +37,19 @@ const Navbar = () => {
           className="relative p-2 rounded-full hover:bg-muted transition-colors"
         >
           <ShoppingBag className="w-6 h-6 text-foreground" />
-          {totalItems() > 0 && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold"
-            >
-              {totalItems()}
-            </motion.span>
-          )}
+          <AnimatePresence>
+            {itemCount > 0 && (
+              <motion.span
+                key={itemCount}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold"
+              >
+                {itemCount}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </button>
       </div>
     </motion.nav>
