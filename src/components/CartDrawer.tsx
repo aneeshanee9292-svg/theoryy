@@ -1,9 +1,16 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
 
 const CartDrawer = () => {
   const { items, isOpen, setCartOpen, updateQuantity, removeItem, totalPrice } = useCartStore();
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    setCartOpen(false);
+    navigate('/checkout');
+  };
 
   return (
     <AnimatePresence>
@@ -104,6 +111,7 @@ const CartDrawer = () => {
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
+                  onClick={handleCheckout}
                   className="w-full py-4 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-sm cta-glow"
                 >
                   Checkout

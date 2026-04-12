@@ -10,7 +10,7 @@ import img12 from '@/assets/12.png';
 
 export const products: Product[] = [
   {
-    id: 'tiramisu-peanut-butter',
+    id: '1',
     name: 'Tiramisu Peanut Butter',
     flavor: 'Rich tiramisu layers with creamy peanut butter',
     price: 299,
@@ -22,7 +22,7 @@ export const products: Product[] = [
     calories: '210',
   },
   {
-    id: 'double-cocoa-fudge',
+    id: '2',
     name: 'Double Cocoa Fudge',
     flavor: 'Intense double chocolate with fudge center',
     price: 299,
