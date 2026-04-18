@@ -6,6 +6,7 @@ import GymPromoSection from '@/components/GymPromoSection';
 import WheyPromoSection from '@/components/WheyPromoSection';
 import BenefitsSection from '@/components/BenefitsSection';
 import StorySection from '@/components/StorySection';
+import SocialProofSection from '@/components/SocialProofSection';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 
@@ -20,6 +21,7 @@ const Index = () => {
       <GymPromoSection />
       <BenefitsSection />
       <StorySection />
+      <SocialProofSection />
       <Footer />
       <CartDrawer />
     </div>
