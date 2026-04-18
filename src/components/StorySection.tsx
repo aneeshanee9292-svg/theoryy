@@ -2,11 +2,20 @@ import { motion } from 'framer-motion';
 import ingredientAlmond from '@/assets/ingredient-almond.png';
 import ingredientPeanut from '@/assets/ingredient-peanut.png';
 import ingredientCocoa from '@/assets/ingredient-cocoa.png';
+import ingredientDates from '@/assets/ingredient-dates.png';
+import ingredientWhey from '@/assets/ingredient-whey.png';
+import ingredientCoffee from '@/assets/ingredient-coffee.png';
 
-const ingredients = [
-  { src: ingredientAlmond, name: 'Premium Almonds', delay: 0 },
-  { src: ingredientPeanut, name: 'Roasted Peanuts', delay: 0.1 },
-  { src: ingredientCocoa, name: 'Cocoa Beans', delay: 0.2 },
+// Center piece
+const centerIngredient = { src: ingredientWhey, name: 'Whey Protein', delay: 0 };
+
+// Surrounding ingredients
+const surroundingIngredients = [
+  { src: ingredientAlmond, name: 'Premium Almonds', delay: 0.1, top: '0%', left: '10%' },
+  { src: ingredientDates, name: 'Organic Dates', delay: 0.15, top: '0%', left: '55%' },
+  { src: ingredientCoffee, name: 'Arabica Coffee', delay: 0.2, top: '35%', left: '0%' },
+  { src: ingredientCocoa, name: 'Cocoa Beans', delay: 0.25, top: '35%', left: '70%' },
+  { src: ingredientPeanut, name: 'Roasted Peanuts', delay: 0.3, top: '72%', left: '30%' },
 ];
 
 const StorySection = () => {
@@ -49,7 +58,36 @@ const StorySection = () => {
             transition={{ duration: 0.6 }}
             className="relative flex items-center justify-center min-h-[400px]"
           >
-            {ingredients.map((ing, i) => (
+            {/* Center: Whey Protein (hero ingredient) */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3, type: 'spring', stiffness: 120 }}
+              className="absolute"
+              style={{ top: '30%', left: '30%' }}
+            >
+              <motion.div
+                animate={{ y: [0, -12, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                className="flex flex-col items-center"
+              >
+                <img
+                  src={centerIngredient.src}
+                  alt={centerIngredient.name}
+                  className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-2xl"
+                  loading="lazy"
+                  width={512}
+                  height={512}
+                />
+                <span className="mt-2 text-xs font-bold text-primary uppercase tracking-wider">
+                  {centerIngredient.name}
+                </span>
+              </motion.div>
+            </motion.div>
+
+            {/* Surrounding 5 ingredients */}
+            {surroundingIngredients.map((ing, i) => (
               <motion.div
                 key={ing.name}
                 initial={{ opacity: 0, scale: 0 }}
@@ -58,8 +96,8 @@ const StorySection = () => {
                 transition={{ delay: 0.3 + ing.delay, type: 'spring', stiffness: 150 }}
                 className="absolute"
                 style={{
-                  top: `${20 + i * 30}%`,
-                  left: `${15 + i * 25}%`,
+                  top: ing.top,
+                  left: ing.left,
                 }}
               >
                 <motion.div
@@ -70,7 +108,7 @@ const StorySection = () => {
                   <img
                     src={ing.src}
                     alt={ing.name}
-                    className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-2xl"
+                    className="w-20 h-20 md:w-28 md:h-28 object-contain drop-shadow-2xl"
                     loading="lazy"
                     width={512}
                     height={512}
