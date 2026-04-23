@@ -15,6 +15,15 @@ export default function AdminLogin({ onLogin }: { onLogin: (token: string) => vo
         setLoading(true);
         setError("");
 
+        // Temporary hardcoded admin login
+        if (username === "admin" && password === "admin") {
+            const tempToken = "temp_admin_token_" + Date.now();
+            localStorage.setItem("jwt", tempToken);
+            onLogin(tempToken);
+            setLoading(false);
+            return;
+        }
+
         try {
             const res = await fetch(`${API_BASE}/admin/auth/login`, {
                 method: "POST",

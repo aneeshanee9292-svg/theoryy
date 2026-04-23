@@ -7,13 +7,13 @@ const promos = [
     image: promoPeanut,
     title: 'Tiramisu Peanut Butter',
     tagline: 'Crush Your PR. Then Crush This Bar.',
-    stat: '20g Protein',
+    stat: '15+ gm Protein',
   },
   {
     image: promoCocoa,
     title: 'Double Cocoa Fudge',
     tagline: 'Post-Workout Fuel That Hits Different.',
-    stat: '22g Protein',
+    stat: '15+ gm Protein',
   },
 ];
 

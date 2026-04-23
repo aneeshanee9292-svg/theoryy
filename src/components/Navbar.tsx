@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Menu, X, Instagram } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '@/assets/theoryy-logo.png';
 
 const navLinks = [
   { label: 'Products', href: '#products' },
   { label: 'Benefits', href: '#benefits' },
-  { label: 'Our Story', href: '#story' },
+  { label: 'About Us', href: '#story' },
 ];
 
 const Navbar = () => {
@@ -15,6 +16,40 @@ const Navbar = () => {
   const items = useCartStore((s) => s.items);
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  /**
+   * If we're already on "/", just scroll to the hash.
+   * Otherwise navigate to "/" first, then scroll after a short delay.
+   */
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+      // Only intercept hash links
+      if (!href.startsWith('#')) return;
+
+      e.preventDefault();
+      const sectionId = href.replace('#', '');
+
+      if (location.pathname === '/') {
+        // Already on home — scroll directly
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // Navigate to home, then scroll after page renders
+        navigate('/');
+        setTimeout(() => {
+          const el = document.getElementById(sectionId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 300);
+      }
+    },
+    [location.pathname, navigate],
+  );
 
   return (
     <>
@@ -35,6 +70,7 @@ const Navbar = () => {
               <a
                 key={link.label}
                 href={link.href}
+                onClick={(e) => handleNavClick(e, link.href)}
                 className="text-sm font-medium tracking-wide uppercase text-foreground/80 hover:text-foreground transition-colors relative group"
               >
                 {link.label}
@@ -47,7 +83,7 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             {/* Instagram link */}
             <a
-              href="https://www.instagram.com/theoryy.in/"
+              href="https://www.instagram.com/beyond.theoryy/"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -119,7 +155,10 @@ const Navbar = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.08 }}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(e) => {
+                    setMobileOpen(false);
+                    handleNavClick(e, link.href);
+                  }}
                   className="text-3xl font-heading uppercase tracking-wider text-foreground hover:text-primary transition-colors"
                 >
                   {link.label}
@@ -145,7 +184,7 @@ const Navbar = () => {
               className="flex items-center justify-center gap-6 pb-10"
             >
               <a
-                href="https://www.instagram.com/theoryy.in/"
+                href="https://www.instagram.com/beyond.theoryy/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-foreground/60 hover:text-pink-500 transition-colors"

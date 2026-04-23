@@ -9,6 +9,7 @@ import Checkout from "./pages/Checkout.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AdminPage from "./pages/AdminPage.tsx"; // ✅ import your admin wrapper
 import OrderSuccess from "./pages/OrderSuccess.tsx";
+import FoundersNote from "./pages/FoundersNote.tsx";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/shop" element={<Shop />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/founders-note" element={<FoundersNote />} />
           <Route path="/admin" element={<AdminPage />} /> {/* ✅ new admin route */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

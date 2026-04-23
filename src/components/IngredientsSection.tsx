@@ -3,7 +3,7 @@ import ingredientsShowcase from '@/assets/ingredients-showcase.png';
 
 const highlights = [
   { label: 'Clean Ingredients', icon: '🌿' },
-  { label: '15g Whey Protein', icon: '💪' },
+  { label: '15+ gm Whey Protein', icon: '💪' },
   { label: 'Naturally Sweetened', icon: '🍯' },
   { label: 'No Refined Sugar', icon: '🚫' },
   { label: 'Authentic Tiramisu Flavor', icon: '☕' },
