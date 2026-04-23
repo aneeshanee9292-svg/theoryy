@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 20% 95%;
+    --foreground: 20 30% 10%;
+
+    --card: 30 15% 97%;
+    --card-foreground: 20 30% 10%;
+
+    --popover: 30 15% 97%;
+    --popover-foreground: 20 30% 10%;
+
+    --primary: 0 55% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 33 50% 60%;
+    --secondary-foreground: 20 30% 10%;
+
+    --muted: 30 10% 90%;
+    --muted-foreground: 20 10% 45%;
+
+    --accent: 33 60% 65%;
+    --accent-foreground: 20 30% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 15% 85%;
+    --input: 30 15% 85%;
+    --ring: 0 55% 42%;
+
+    --radius: 1rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Custom tokens */
+    --chocolate: 15 30% 13%;
+    --chocolate-light: 15 25% 22%;
+    --peanut: 33 50% 60%;
+    --peanut-light: 33 55% 72%;
+    --caramel: 33 60% 65%;
+    --surface-warm: 30 20% 95%;
+    --surface-dark: 0 0% 5%;
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 30 20% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 30 20% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 30 20% 95%;
+
+    --primary: 0 55% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 15 25% 22%;
+    --secondary-foreground: 30 20% 95%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 30 10% 60%;
+
+    --accent: 33 50% 60%;
+    --accent-foreground: 0 0% 5%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 55% 42%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer utilities {
+  .text-gradient-brand {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  .glass-surface {
+    @apply bg-card/80 backdrop-blur-md border border-border/50;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl;
+  }
+
+  .cta-glow {
+    box-shadow: 0 0 24px hsl(var(--primary) / 0.4);
+  }
+
+  .animate-gradient {
+    animation: gradient-shift 15s ease infinite;
+    background-size: 200% 200%;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ── Ingredient orbit animations ── */
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbit-counter-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(-360deg); }
+}
+
+@keyframes orbit-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.03); }
+}
+
+.animate-orbit-spin {
+  animation: orbit-spin 25s linear infinite;
+}
+
+.animate-orbit-counter-spin {
+  animation: orbit-counter-spin 25s linear infinite;
+}
+
+.animate-orbit-pulse {
+  animation: orbit-pulse 4s ease-in-out infinite;
+}
+
+/* Smooth scroll */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
