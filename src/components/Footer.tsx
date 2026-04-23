@@ -4,7 +4,7 @@ import { useState } from 'react';
 import logo from '@/assets/theoryy-logo.png';
 
 const socialLinks = [
-  { icon: Instagram, href: 'https://www.instagram.com/theoryy.in/', label: 'Instagram', color: 'hover:text-pink-500' },
+  { icon: Instagram, href: 'https://www.instagram.com/beyond.theoryy/', label: 'Instagram', color: 'hover:text-pink-500' },
   { icon: Facebook, href: 'https://facebook.com/theoryy', label: 'Facebook', color: 'hover:text-blue-500' },
   { icon: Youtube, href: 'https://youtube.com/@theoryy', label: 'YouTube', color: 'hover:text-red-500' },
   { icon: Twitter, href: 'https://twitter.com/theoryy', label: 'Twitter', color: 'hover:text-sky-400' },
@@ -13,7 +13,8 @@ const socialLinks = [
 const quickLinks = [
   { label: 'Products', href: '#products' },
   { label: 'Benefits', href: '#benefits' },
-  { label: 'Our Story', href: '#story' },
+  { label: 'About Us', href: '#story' },
+  { label: "Founder's Note", href: '/founders-note' },
   { label: 'Shop', href: '/shop' },
 ];
 

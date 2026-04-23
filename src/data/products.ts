@@ -36,7 +36,7 @@ function mapBackendToFrontend(p: any, discounts: ProductDiscount[]): Product {
     images: [p.imageUrl ?? ""],     // ✅ same here
     theme: "red",                   // default theme
     description: p.description ?? "",
-    protein: p.protein ?? "20g",
+    protein: p.protein ?? "15+ gm",
     calories: p.calories ?? "200",
   };
 }

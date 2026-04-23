@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Leaf, Dumbbell, Heart, Flame, ShieldCheck, Sparkles } from 'lucide-react';
 
 const benefits = [
-  { icon: Dumbbell, title: '20g+ Protein', desc: 'Premium whey & plant blend' },
+  { icon: Dumbbell, title: '15+ gm Protein', desc: 'Premium whey & plant blend' },
   { icon: Leaf, title: 'All Natural', desc: 'No artificial sweeteners' },
   { icon: Heart, title: 'Pre + Probiotics', desc: 'Gut-friendly formula' },
   { icon: Flame, title: 'Low Sugar', desc: 'Under 3g per bar' },
