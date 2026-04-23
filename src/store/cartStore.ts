@@ -5,6 +5,7 @@ export interface Product {
   name: string;
   flavor: string;
   price: number;
+  originalPrice?: number; // original price before discount (if applicable)
   image: string;
   images?: string[];
   theme: 'red' | 'purple';

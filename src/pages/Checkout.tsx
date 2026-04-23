@@ -14,6 +14,7 @@ import {
   CreditCard,
   Loader2,
   ShoppingBag,
+  Tag,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import Navbar from '@/components/Navbar';
@@ -65,30 +66,30 @@ const Checkout = () => {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [sessionId] = useState(() => 'sess_' + Math.random().toString(36).substring(2, 15));
 
-  /* ── OTP state ── */
-  const [emailOTPInput, setEmailOTPInput] = useState('');
+  /* ── OTP state (mobile only) ── */
   const [phoneOTPInput, setPhoneOTPInput] = useState('');
-  const [emailVerified, setEmailVerified] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
-  const [emailOTPSent, setEmailOTPSent] = useState(false);
   const [phoneOTPSent, setPhoneOTPSent] = useState(false);
-  const [emailOTPError, setEmailOTPError] = useState('');
   const [phoneOTPError, setPhoneOTPError] = useState('');
-  const [sendingEmailOTP, setSendingEmailOTP] = useState(false);
   const [sendingPhoneOTP, setSendingPhoneOTP] = useState(false);
+
+  /* ── coupon state ── */
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponMessage, setCouponMessage] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   /* ── payment state ── */
   const [paying, setPaying] = useState(false);
 
-  /* ── Countdown timers ── */
-  const [emailCountdown, setEmailCountdown] = useState(0);
+  /* ── Countdown timer ── */
   const [phoneCountdown, setPhoneCountdown] = useState(0);
-  const emailTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phoneTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     return () => {
-      if (emailTimerRef.current) clearInterval(emailTimerRef.current);
       if (phoneTimerRef.current) clearInterval(phoneTimerRef.current);
     };
   }, []);
@@ -123,35 +124,15 @@ const Checkout = () => {
     if (validateDetails()) setStep('verify');
   };
 
-  /* ── OTP sending (real) ── */
-  const sendEmailOTP = async () => {
-    setSendingEmailOTP(true);
-    setEmailOTPError('');
-    try {
-      await fetch(`${API_BASE}/otp/send?mobileNumber=${encodeURIComponent(form.email)}`, { method: 'POST' });
-      setEmailOTPSent(true);
-      setEmailCountdown(30);
-      emailTimerRef.current = setInterval(() => {
-        setEmailCountdown((c) => {
-          if (c <= 1) {
-            if (emailTimerRef.current) clearInterval(emailTimerRef.current);
-            return 0;
-          }
-          return c - 1;
-        });
-      }, 1000);
-    } catch (e) {
-      setEmailOTPError('Failed to send OTP.');
-    } finally {
-      setSendingEmailOTP(false);
-    }
-  };
-
+  /* ── OTP sending (via Email — free) ── */
   const sendPhoneOTP = async () => {
     setSendingPhoneOTP(true);
     setPhoneOTPError('');
     try {
-      await fetch(`${API_BASE}/otp/send?mobileNumber=${encodeURIComponent(form.phone)}`, { method: 'POST' });
+      await fetch(
+        `${API_BASE}/otp/send?mobileNumber=${encodeURIComponent(form.phone)}&email=${encodeURIComponent(form.email)}`,
+        { method: 'POST' }
+      );
       setPhoneOTPSent(true);
       setPhoneCountdown(30);
       phoneTimerRef.current = setInterval(() => {
@@ -170,20 +151,6 @@ const Checkout = () => {
     }
   };
 
-  const verifyEmailOTP = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/otp/verify?mobileNumber=${encodeURIComponent(form.email)}&otp=${encodeURIComponent(emailOTPInput)}`, { method: 'POST' });
-      if (res.ok) {
-        setEmailVerified(true);
-        setEmailOTPError('');
-      } else {
-        setEmailOTPError('Invalid OTP. Please try again.');
-      }
-    } catch (e) {
-       setEmailOTPError('Invalid OTP. Please try again.');
-    }
-  };
-
   const verifyPhoneOTP = async () => {
     try {
       const res = await fetch(`${API_BASE}/otp/verify?mobileNumber=${encodeURIComponent(form.phone)}&otp=${encodeURIComponent(phoneOTPInput)}`, { method: 'POST' });
@@ -194,7 +161,7 @@ const Checkout = () => {
         setPhoneOTPError('Invalid OTP. Please try again.');
       }
     } catch (e) {
-       setPhoneOTPError('Invalid OTP. Please try again.');
+      setPhoneOTPError('Invalid OTP. Please try again.');
     }
   };
 
@@ -211,23 +178,23 @@ const Checkout = () => {
 
   const handlePayment = async () => {
     setPaying(true);
-    
+
     try {
-      // 1. Sync cart item to backend using sessionId
+      // 1. Sync cart items to backend using sessionId
       for (const item of items) {
-         await fetch(`${API_BASE}/cart/add`, {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({
-             sessionId: sessionId,
-             productId: parseInt(item.product.id),
-             quantity: item.quantity,
-             price: item.product.price
-           })
-         });
+        await fetch(`${API_BASE}/cart/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            productId: parseInt(item.product.id),
+            quantity: item.quantity,
+            price: item.product.price
+          })
+        });
       }
 
-      // 2. Checkout the order via backend
+      // 2. Checkout the order via backend — include ALL delivery details
       const checkoutRes = await fetch(`${API_BASE}/orders/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -235,17 +202,32 @@ const Checkout = () => {
           sessionId: sessionId,
           mobileNumber: form.phone,
           email: form.email,
-          couponCode: null
+          fullName: form.fullName,
+          address: form.address,
+          city: form.city,
+          state: form.state,
+          pincode: form.pincode,
+          couponCode: couponApplied ? couponCode : null
         })
       });
 
       if (!checkoutRes.ok) {
-         throw new Error("Failed to create order on server");
+        const errBody = await checkoutRes.text();
+        throw new Error(errBody || "Failed to create order on server");
       }
-      
+
       const checkoutData = await checkoutRes.json();
-      const rzpOrderId = checkoutData.data.razorpayOrderId;
-      const amount = checkoutData.data.amount * 100;
+      const rzpOrderId = checkoutData.data?.razorpayOrderId;
+      // Backend returns amount in rupees; Razorpay expects paise
+      const amountInPaise = Math.round((checkoutData.data?.amount || 0) * 100);
+
+      if (!rzpOrderId) {
+        throw new Error("No Razorpay order ID received from server. Check backend logs.");
+      }
+
+      if (amountInPaise < 100) {
+        throw new Error("Order amount must be at least ₹1 (100 paise) for Razorpay.");
+      }
 
       const loaded = await loadRazorpayScript();
       if (!loaded) {
@@ -254,9 +236,14 @@ const Checkout = () => {
         return;
       }
 
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!razorpayKeyId) {
+        throw new Error("Razorpay key not configured. Check VITE_RAZORPAY_KEY_ID in .env");
+      }
+
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_XXXXXXXXX',
-        amount,
+        key: razorpayKeyId,
+        amount: amountInPaise,
         currency: 'INR',
         name: 'Theoryy',
         description: `Order of ${totalItems()} item(s)`,
@@ -265,27 +252,40 @@ const Checkout = () => {
         handler: async (response: any) => {
           console.log('Payment success:', response);
           try {
-             const verifyRes = await fetch(`${API_BASE}/payment/verify`, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({
-                 razorpayOrderId: response.razorpay_order_id,
-                 razorpayPaymentId: response.razorpay_payment_id,
-                 razorpaySignature: response.razorpay_signature
-               })
-             });
+            const verifyRes = await fetch(`${API_BASE}/payment/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature
+              })
+            });
 
-             if (verifyRes.ok) {
-                alert(`Payment successful! Order confirmed.`);
-                useCartStore.getState().items.forEach((item) =>
-                  useCartStore.getState().removeItem(item.product.id)
-                );
-                navigate('/');
-             } else {
-                alert("Payment verification failed on server!");
-             }
-          } catch(e) {
-             alert("Error during payment verification!");
+            if (verifyRes.ok) {
+              // Clear cart fully
+              const currentItems = useCartStore.getState().items;
+              currentItems.forEach((ci) =>
+                useCartStore.getState().removeItem(ci.product.id)
+              );
+              // Redirect to success page with order details
+              navigate('/order-success', {
+                state: {
+                  orderId: response.razorpay_order_id,
+                  paymentId: response.razorpay_payment_id,
+                  amount: amountInPaise / 100,
+                  email: form.email,
+                  fullName: form.fullName,
+                },
+              });
+            } else {
+              const errText = await verifyRes.text();
+              alert("Payment verification failed: " + errText);
+              setPaying(false);
+            }
+          } catch (e) {
+            alert("Error during payment verification. Please contact support.");
+            setPaying(false);
           }
         },
         prefill: {
@@ -311,9 +311,10 @@ const Checkout = () => {
         setPaying(false);
       });
       rzp.open();
-    } catch(err: any) {
-        alert('Checkout error: ' + err.message);
-        setPaying(false);
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      alert('Oops! Something went wrong.\n' + err.message);
+      setPaying(false);
     }
   };
 
@@ -384,11 +385,10 @@ const Checkout = () => {
             {steps.map((s, i) => (
               <div key={s.key} className="flex items-center">
                 <div
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                    i <= stepIndex
-                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${i <= stepIndex
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                    : 'bg-muted text-muted-foreground'
+                    }`}
                 >
                   {i < stepIndex ? (
                     <CheckCircle2 className="w-4 h-4" />
@@ -399,9 +399,8 @@ const Checkout = () => {
                 </div>
                 {i < steps.length - 1 && (
                   <div
-                    className={`w-8 sm:w-16 h-0.5 transition-all duration-500 ${
-                      i < stepIndex ? 'bg-primary' : 'bg-border'
-                    }`}
+                    className={`w-8 sm:w-16 h-0.5 transition-all duration-500 ${i < stepIndex ? 'bg-primary' : 'bg-border'
+                      }`}
                   />
                 )}
               </div>
@@ -443,9 +442,8 @@ const Checkout = () => {
                               value={form.fullName}
                               onChange={handleChange}
                               placeholder="Enter your full name"
-                              className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 border ${
-                                errors.fullName ? 'border-destructive' : 'border-border'
-                              } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
+                              className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 border ${errors.fullName ? 'border-destructive' : 'border-border'
+                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
                             />
                           </div>
                           {errors.fullName && (
@@ -467,9 +465,8 @@ const Checkout = () => {
                                 value={form.email}
                                 onChange={handleChange}
                                 placeholder="you@example.com"
-                                className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 border ${
-                                  errors.email ? 'border-destructive' : 'border-border'
-                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
+                                className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 border ${errors.email ? 'border-destructive' : 'border-border'
+                                  } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
                               />
                             </div>
                             {errors.email && (
@@ -490,9 +487,8 @@ const Checkout = () => {
                                 onChange={handleChange}
                                 placeholder="10-digit number"
                                 maxLength={10}
-                                className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 border ${
-                                  errors.phone ? 'border-destructive' : 'border-border'
-                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
+                                className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 border ${errors.phone ? 'border-destructive' : 'border-border'
+                                  } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
                               />
                             </div>
                             {errors.phone && (
@@ -514,9 +510,8 @@ const Checkout = () => {
                               onChange={handleChange}
                               rows={2}
                               placeholder="House no, Street, Landmark"
-                              className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 border ${
-                                errors.address ? 'border-destructive' : 'border-border'
-                              } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm resize-none`}
+                              className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/50 border ${errors.address ? 'border-destructive' : 'border-border'
+                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm resize-none`}
                             />
                           </div>
                           {errors.address && (
@@ -536,9 +531,8 @@ const Checkout = () => {
                               value={form.city}
                               onChange={handleChange}
                               placeholder="City"
-                              className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${
-                                errors.city ? 'border-destructive' : 'border-border'
-                              } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
+                              className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${errors.city ? 'border-destructive' : 'border-border'
+                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
                             />
                             {errors.city && (
                               <p className="text-destructive text-xs mt-1">{errors.city}</p>
@@ -554,9 +548,8 @@ const Checkout = () => {
                               value={form.state}
                               onChange={handleChange}
                               placeholder="State"
-                              className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${
-                                errors.state ? 'border-destructive' : 'border-border'
-                              } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
+                              className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${errors.state ? 'border-destructive' : 'border-border'
+                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
                             />
                             {errors.state && (
                               <p className="text-destructive text-xs mt-1">{errors.state}</p>
@@ -573,9 +566,8 @@ const Checkout = () => {
                               onChange={handleChange}
                               placeholder="6-digit"
                               maxLength={6}
-                              className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${
-                                errors.pincode ? 'border-destructive' : 'border-border'
-                              } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
+                              className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${errors.pincode ? 'border-destructive' : 'border-border'
+                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
                             />
                             {errors.pincode && (
                               <p className="text-destructive text-xs mt-1">{errors.pincode}</p>
@@ -598,7 +590,7 @@ const Checkout = () => {
                     </motion.div>
                   )}
 
-                  {/* ─── STEP 2: VERIFICATION ─── */}
+                  {/* ─── STEP 2: VERIFICATION (Mobile OTP Only) ─── */}
                   {step === 'verify' && (
                     <motion.div
                       key="verify"
@@ -611,114 +603,22 @@ const Checkout = () => {
                     >
                       <h2 className="font-heading text-xl uppercase mb-2 flex items-center gap-2">
                         <Shield className="w-5 h-5 text-primary" />
-                        Verify Your Contact
+                        Verify Your Identity
                       </h2>
                       <p className="text-muted-foreground text-sm mb-8">
-                        We need to verify your email and phone number for order updates.
+                        We’ll send a verification code to <strong>{form.email}</strong> to confirm your order.
                       </p>
 
                       <div className="space-y-8">
-                        {/* Email Verification */}
-                        <div className="p-5 rounded-xl bg-muted/30 border border-border space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                  emailVerified
-                                    ? 'bg-green-500/20 text-green-500'
-                                    : 'bg-primary/10 text-primary'
-                                }`}
-                              >
-                                {emailVerified ? (
-                                  <CheckCircle2 className="w-5 h-5" />
-                                ) : (
-                                  <Mail className="w-5 h-5" />
-                                )}
-                              </div>
-                              <div>
-                                <p className="text-sm font-semibold">Email Verification</p>
-                                <p className="text-xs text-muted-foreground">{form.email}</p>
-                              </div>
-                            </div>
-                            {emailVerified && (
-                              <span className="text-xs font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-full">
-                                Verified ✓
-                              </span>
-                            )}
-                          </div>
-
-                          {!emailVerified && (
-                            <>
-                              {!emailOTPSent ? (
-                                <motion.button
-                                  whileTap={{ scale: 0.97 }}
-                                  onClick={sendEmailOTP}
-                                  disabled={sendingEmailOTP}
-                                  className="w-full py-3 rounded-xl bg-primary/10 text-primary font-semibold text-sm hover:bg-primary/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                  {sendingEmailOTP ? (
-                                    <>
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                      Sending OTP...
-                                    </>
-                                  ) : (
-                                    'Send OTP to Email'
-                                  )}
-                                </motion.button>
-                              ) : (
-                                <div className="space-y-3">
-                                  <div className="flex gap-3">
-                                    <input
-                                      type="text"
-                                      value={emailOTPInput}
-                                      onChange={(e) => {
-                                        setEmailOTPInput(e.target.value.replace(/\D/g, '').slice(0, 6));
-                                        setEmailOTPError('');
-                                      }}
-                                      placeholder="Enter 4-digit OTP from console logs"
-                                      maxLength={6}
-                                      className="flex-1 px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm text-center tracking-[0.3em] font-mono"
-                                    />
-                                    <motion.button
-                                      whileTap={{ scale: 0.97 }}
-                                      onClick={verifyEmailOTP}
-                                      disabled={emailOTPInput.length < 4}
-                                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-50 hover:brightness-110 transition-all"
-                                    >
-                                      Verify
-                                    </motion.button>
-                                  </div>
-                                  {emailOTPError && (
-                                    <p className="text-destructive text-xs">{emailOTPError}</p>
-                                  )}
-                                  <p className="text-xs text-muted-foreground">
-                                    {emailCountdown > 0 ? (
-                                      <>Resend OTP in {emailCountdown}s</>
-                                    ) : (
-                                      <button
-                                        onClick={sendEmailOTP}
-                                        className="text-primary hover:underline"
-                                      >
-                                        Resend OTP
-                                      </button>
-                                    )}
-                                  </p>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-
                         {/* Phone Verification */}
                         <div className="p-5 rounded-xl bg-muted/30 border border-border space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div
-                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                  phoneVerified
-                                    ? 'bg-green-500/20 text-green-500'
-                                    : 'bg-primary/10 text-primary'
-                                }`}
+                                className={`w-10 h-10 rounded-full flex items-center justify-center ${phoneVerified
+                                  ? 'bg-green-500/20 text-green-500'
+                                  : 'bg-primary/10 text-primary'
+                                  }`}
                               >
                                 {phoneVerified ? (
                                   <CheckCircle2 className="w-5 h-5" />
@@ -727,8 +627,8 @@ const Checkout = () => {
                                 )}
                               </div>
                               <div>
-                                <p className="text-sm font-semibold">Phone Verification</p>
-                                <p className="text-xs text-muted-foreground">+91 {form.phone}</p>
+                                <p className="text-sm font-semibold">Email Verification</p>
+                                <p className="text-xs text-muted-foreground">{form.email}</p>
                               </div>
                             </div>
                             {phoneVerified && (
@@ -753,7 +653,7 @@ const Checkout = () => {
                                       Sending OTP...
                                     </>
                                   ) : (
-                                    'Send OTP to Phone'
+                                    'Send OTP to Email'
                                   )}
                                 </motion.button>
                               ) : (
@@ -766,7 +666,7 @@ const Checkout = () => {
                                         setPhoneOTPInput(e.target.value.replace(/\D/g, '').slice(0, 6));
                                         setPhoneOTPError('');
                                       }}
-                                      placeholder="Enter 4-digit OTP from console logs"
+                                      placeholder="Enter 4-digit OTP"
                                       maxLength={6}
                                       className="flex-1 px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm text-center tracking-[0.3em] font-mono"
                                     />
@@ -799,6 +699,25 @@ const Checkout = () => {
                             </>
                           )}
                         </div>
+
+                        {/* Email info (for invoice, no OTP) */}
+                        <div className="p-5 rounded-xl bg-muted/30 border border-border">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-500/20 text-green-500">
+                              <Phone className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold">Phone for Delivery</p>
+                              <p className="text-xs text-muted-foreground">+91 {form.phone}</p>
+                            </div>
+                            <span className="ml-auto text-xs font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-full">
+                              Saved ✓
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Your phone number will be used for delivery coordination and order updates.
+                          </p>
+                        </div>
                       </div>
 
                       {/* Navigation buttons */}
@@ -813,7 +732,7 @@ const Checkout = () => {
                         <motion.button
                           whileTap={{ scale: 0.97 }}
                           onClick={() => goStep('review')}
-                          disabled={!emailVerified || !phoneVerified}
+                          disabled={!phoneVerified}
                           className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-sm cta-glow hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                         >
                           Review & Pay
@@ -852,7 +771,6 @@ const Checkout = () => {
                           <div>
                             <span className="text-muted-foreground">Email:</span>{' '}
                             <span className="font-medium">{form.email}</span>
-                            <CheckCircle2 className="inline w-3.5 h-3.5 text-green-500 ml-1" />
                           </div>
                           <div>
                             <span className="text-muted-foreground">Phone:</span>{' '}
@@ -893,10 +811,106 @@ const Checkout = () => {
                         ))}
                       </div>
 
+                      {/* Coupon Code Input */}
+                      <div className="p-5 rounded-xl bg-muted/30 border border-border space-y-3 mb-6">
+                        <h3 className="text-sm font-bold uppercase tracking-wide text-primary flex items-center gap-2">
+                          <Tag className="w-4 h-4" />
+                          Apply Coupon
+                        </h3>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={couponCode}
+                            onChange={(e) => {
+                              setCouponCode(e.target.value.toUpperCase());
+                              setCouponError('');
+                            }}
+                            placeholder="Enter coupon code"
+                            disabled={couponApplied || validatingCoupon}
+                            className={`flex-1 px-4 py-3 rounded-xl bg-muted/50 border ${
+                              couponError ? 'border-destructive' : couponApplied ? 'border-green-500' : 'border-border'
+                            } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm uppercase tracking-wider font-mono ${
+                              couponApplied ? 'opacity-60' : ''
+                            }`}
+                          />
+                          {couponApplied ? (
+                            <button
+                              onClick={() => {
+                                setCouponApplied(false);
+                                setCouponCode('');
+                                setCouponError('');
+                                setCouponDiscount(0);
+                                setCouponMessage('');
+                              }}
+                              className="px-5 py-3 rounded-xl bg-destructive/10 text-destructive font-semibold text-sm hover:bg-destructive/20 transition-all"
+                            >
+                              Remove
+                            </button>
+                          ) : (
+                            <motion.button
+                              whileTap={{ scale: 0.97 }}
+                              disabled={validatingCoupon}
+                              onClick={async () => {
+                                if (!couponCode.trim()) {
+                                  setCouponError('Enter a coupon code');
+                                  return;
+                                }
+                                setValidatingCoupon(true);
+                                setCouponError('');
+                                try {
+                                  const res = await fetch(
+                                    `${API_BASE}/coupons/validate?code=${encodeURIComponent(couponCode)}&amount=${totalPrice()}`
+                                  );
+                                  const data = await res.json();
+                                  if (res.ok && data.valid) {
+                                    setCouponApplied(true);
+                                    setCouponDiscount(data.discount);
+                                    setCouponMessage(data.message);
+                                  } else {
+                                    setCouponError(data.message || 'Invalid coupon');
+                                  }
+                                } catch {
+                                  setCouponError('Failed to validate coupon');
+                                } finally {
+                                  setValidatingCoupon(false);
+                                }
+                              }}
+                              className="px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-60 flex items-center gap-2"
+                            >
+                              {validatingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                              Apply
+                            </motion.button>
+                          )}
+                        </div>
+                        {couponError && (
+                          <p className="text-destructive text-xs">{couponError}</p>
+                        )}
+                        {couponApplied && (
+                          <p className="text-green-500 text-xs flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            {couponMessage} — you save ₹{couponDiscount}
+                          </p>
+                        )}
+                      </div>
+
                       {/* Total */}
-                      <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
-                        <span className="font-heading text-lg uppercase">Total</span>
-                        <span className="text-2xl font-bold text-primary">₹{totalPrice()}</span>
+                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6 space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span>₹{totalPrice()}</span>
+                        </div>
+                        {couponApplied && couponDiscount > 0 && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-green-500 flex items-center gap-1">
+                              <Tag className="w-3.5 h-3.5" /> Coupon ({couponCode})
+                            </span>
+                            <span className="text-green-500 font-medium">-₹{couponDiscount}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between pt-1 border-t border-border">
+                          <span className="font-heading text-lg uppercase">Total</span>
+                          <span className="text-2xl font-bold text-primary">₹{Math.max(0, totalPrice() - couponDiscount)}</span>
+                        </div>
                       </div>
 
                       {/* Navigation */}
@@ -922,7 +936,7 @@ const Checkout = () => {
                           ) : (
                             <>
                               <CreditCard className="w-4 h-4" />
-                              Pay ₹{totalPrice()}
+                              Pay ₹{Math.max(0, totalPrice() - couponDiscount)}
                             </>
                           )}
                         </motion.button>
@@ -970,24 +984,21 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-green-500 font-medium">
-                      {totalPrice() >= 500 ? 'Free' : '₹49'}
-                    </span>
+                    <span className="text-green-500 font-medium">Free</span>
                   </div>
+                  {couponApplied && couponDiscount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-500">Coupon</span>
+                      <span className="text-green-500 font-medium">-₹{couponDiscount}</span>
+                    </div>
+                  )}
                   <div className="border-t border-border pt-3 flex justify-between">
                     <span className="font-heading text-base uppercase">Total</span>
                     <span className="text-xl font-bold text-primary">
-                      ₹{totalPrice() + (totalPrice() >= 500 ? 0 : 49)}
+                      ₹{Math.max(0, totalPrice() - couponDiscount)}
                     </span>
                   </div>
                 </div>
-
-                {totalPrice() < 500 && (
-                  <p className="text-xs text-muted-foreground mt-4 p-3 rounded-lg bg-accent/10">
-                    🚚 Add ₹{500 - totalPrice()} more for <strong>free shipping</strong>!
-                  </p>
-                )}
-
                 {/* Trust badges */}
                 <div className="mt-6 pt-5 border-t border-border">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
