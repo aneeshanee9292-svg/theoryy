@@ -57,7 +57,12 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         <p className="text-xs sm:text-sm text-muted-foreground mb-4">{product.flavor}</p>
 
         <div className="flex items-center justify-between">
-          <span className="text-xl sm:text-2xl font-bold">₹{product.price}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xl sm:text-2xl font-bold">₹{product.price}</span>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-sm text-muted-foreground line-through">₹{product.originalPrice}</span>
+            )}
+          </div>
 
           <AnimatePresence mode="wait">
             {quantity === 0 ? (

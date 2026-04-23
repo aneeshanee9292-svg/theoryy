@@ -1,20 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import ProductCard from '@/components/ProductCard';
-import { products } from '@/data/products';
+import { fetchProducts } from '@/data/products';   // ✅ changed import
+import type { Product } from '@/store/cartStore';
 import { ChevronLeft } from 'lucide-react';
 
 const Shop = () => {
   const navigate = useNavigate();
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'cocoa' | 'peanut'>('all');
+  const [products, setProducts] = useState<Product[]>([]);
+
+  // ✅ fetch products from backend on load
+  useEffect(() => {
+    fetchProducts()
+      .then(setProducts)
+      .catch(err => console.error("Failed to load products:", err));
+  }, []);
 
   const filteredProducts = products.filter(product => {
-    if (selectedFilter === 'cocoa') return product.id.includes('cocoa');
-    if (selectedFilter === 'peanut') return product.id.includes('peanut');
+    if (selectedFilter === 'cocoa') return product.name.toLowerCase().includes('cocoa');
+    if (selectedFilter === 'peanut') return product.name.toLowerCase().includes('peanut');
     return true;
   });
 
@@ -22,16 +31,12 @@ const Shop = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Banner with Background Gradient */}
+      {/* Hero Banner */}
       <div className="relative min-h-[40vh] md:min-h-[50vh] flex items-center justify-center overflow-hidden">
-        {/* Animated Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary/20 animate-gradient" />
-
-        {/* Decorative Shapes */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl translate-y-1/2" />
 
-        {/* Content */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -66,11 +71,10 @@ const Shop = () => {
               <button
                 key={filter.id}
                 onClick={() => setSelectedFilter(filter.id as any)}
-                className={`px-6 py-2 rounded-full font-medium transition-all ${
-                  selectedFilter === filter.id
+                className={`px-6 py-2 rounded-full font-medium transition-all ${selectedFilter === filter.id
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-border text-foreground hover:bg-border/80'
-                }`}
+                  }`}
               >
                 {filter.label}
               </button>
@@ -82,10 +86,7 @@ const Shop = () => {
       {/* Products Grid */}
       <section className="py-16 md:py-24 px-4 sm:px-6">
         <div className="container mx-auto max-w-5xl">
-          <motion.div
-            layout
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12"
-          >
+          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             {filteredProducts.map((product, i) => (
               <motion.div
                 key={product.id}

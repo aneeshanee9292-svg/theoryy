@@ -1,8 +1,18 @@
 import { motion } from 'framer-motion';
 import ProductCard from './ProductCard';
-import { products } from '@/data/products';
+import { useEffect, useState } from 'react';
+import type { Product } from '@/store/cartStore';
+import { fetchProducts } from '@/data/products';
 
 const ProductsSection = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetchProducts()
+      .then(setProducts)
+      .catch(err => console.error("Failed to load products:", err));
+  }, []);
+
   return (
     <section id="products" className="py-16 md:py-24 px-4 sm:px-6">
       <div className="container mx-auto max-w-5xl">
