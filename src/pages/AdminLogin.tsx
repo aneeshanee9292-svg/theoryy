@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Lock, User, Loader2, ShieldCheck } from "lucide-react";
 
-const API_BASE = "http://localhost:8081";
+import { API_BASE } from '@/config';
 
 export default function AdminLogin({ onLogin }: { onLogin: (token: string) => void }) {
     const [username, setUsername] = useState("");

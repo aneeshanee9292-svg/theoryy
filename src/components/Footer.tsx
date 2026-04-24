@@ -1,13 +1,11 @@
 import { motion } from 'framer-motion';
-import { Instagram, Facebook, Youtube, Twitter, Mail, MapPin, Phone, ArrowRight } from 'lucide-react';
+import { Instagram, Youtube, Mail, MapPin, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import logo from '@/assets/theoryy-logo.png';
 
 const socialLinks = [
   { icon: Instagram, href: 'https://www.instagram.com/beyond.theoryy/', label: 'Instagram', color: 'hover:text-pink-500' },
-  { icon: Facebook, href: 'https://facebook.com/theoryy', label: 'Facebook', color: 'hover:text-blue-500' },
-  { icon: Youtube, href: 'https://youtube.com/@theoryy', label: 'YouTube', color: 'hover:text-red-500' },
-  { icon: Twitter, href: 'https://twitter.com/theoryy', label: 'Twitter', color: 'hover:text-sky-400' },
+  { icon: Youtube, href: 'https://www.youtube.com/@Beyondtheoryy', label: 'YouTube', color: 'hover:text-red-500' },
 ];
 
 const quickLinks = [
@@ -21,8 +19,6 @@ const quickLinks = [
 const legalLinks = [
   { label: 'Privacy Policy', href: '#' },
   { label: 'Terms of Service', href: '#' },
-  { label: 'Shipping Policy', href: '#' },
-  { label: 'Refund Policy', href: '#' },
 ];
 
 const Footer = () => {
@@ -119,30 +115,10 @@ const Footer = () => {
           >
             <h3 className="text-sm font-heading uppercase tracking-widest mb-5 text-white/90">Stay Connected</h3>
             <p className="text-sm text-white/50 mb-4">Get exclusive drops & offers straight to your inbox.</p>
-            <form
-              onSubmit={(e) => { e.preventDefault(); setEmail(''); }}
-              className="flex mb-6"
-            >
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email"
-                className="flex-1 px-4 py-2.5 rounded-l-full bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-colors"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2.5 rounded-r-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                aria-label="Subscribe"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-
             <div className="space-y-3 text-sm text-white/50">
-              <a href="mailto:hello@theoryy.in" className="flex items-center gap-2 hover:text-white transition-colors">
+              <a href="mailto:contact@theoryy.info" className="flex items-center gap-2 hover:text-white transition-colors">
                 <Mail className="w-4 h-4 text-primary/70" />
-                hello@theoryy.in
+                contact@theoryy.info
               </a>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
