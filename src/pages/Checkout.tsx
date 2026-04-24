@@ -20,7 +20,7 @@ import { useCartStore } from '@/store/cartStore';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-const API_BASE = 'http://localhost:8081';
+import { API_BASE } from '@/config';
 
 /* ─── Types ─────────────────────────────────────────── */
 interface FormData {

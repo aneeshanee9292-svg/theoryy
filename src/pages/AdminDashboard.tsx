@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Package, Upload, Image, Plus, Trash2, Edit3, RefreshCw, Tag, Percent,
   LogOut, Loader2, CheckCircle2, X, Save, ShoppingBag, BarChart3,
-  ImagePlus, DollarSign, Hash, FileText, AlertCircle, ToggleLeft, ToggleRight,
+  ImagePlus, IndianRupee, Hash, FileText, AlertCircle, ToggleLeft, ToggleRight,
 } from "lucide-react";
 
-const API_BASE = "http://localhost:8081";
+import { API_BASE } from '@/config';
 
 interface ProductType {
   id: number;
@@ -527,7 +527,7 @@ const AdminDashboard: React.FC = () => {
                           <div>
                             <label className="block text-xs font-medium mb-1 text-foreground/70">Price (₹)</label>
                             <div className="relative">
-                              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                               <input name="price" type="number" value={productForm.price} onChange={handleProductChange}
                                 placeholder="0"
                                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" />

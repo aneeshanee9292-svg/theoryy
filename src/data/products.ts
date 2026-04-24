@@ -1,6 +1,6 @@
 import type { Product } from '@/store/cartStore';
 
-const API_BASE = 'http://localhost:8081';
+import { API_BASE } from '@/config';
 
 // --- Discount type from backend ---
 interface ProductDiscount {

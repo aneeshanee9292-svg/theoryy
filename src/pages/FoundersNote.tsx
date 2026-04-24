@@ -175,6 +175,7 @@ const FoundersNote = () => {
                     Because when it comes to your body and your life —{' '}
                     <strong className="text-foreground font-semibold">quality isn't optional, it's non-negotiable</strong>{' '}
                     and there's{' '}
+                    <br />
                     <span className="text-gradient-brand font-bold uppercase tracking-wider">No Plan B</span>.
                   </p>
                 </motion.div>
