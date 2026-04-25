@@ -1,1 +1,2 @@
-export const API_BASE = "https://d1tj8ke0s4uodj.cloudfront.net";
+export const API_BASE = "";
+
