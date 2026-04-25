@@ -33,7 +33,6 @@ const AdminDashboard: React.FC = () => {
 
   /* ── Image Upload State ── */
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadFolder, setUploadFolder] = useState("products");
   const [uploading, setUploading] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [lastUploadedUrl, setLastUploadedUrl] = useState("");
@@ -93,13 +92,13 @@ const AdminDashboard: React.FC = () => {
 
   const refreshUploadedImages = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/files/list/${uploadFolder}`, {
+      const res = await fetch(`${API_BASE}/files/list`, {
         headers: { "Authorization": `Bearer ${token}` },
       });
       const data = await res.json();
       setUploadedUrls(data.data || []);
     } catch { /* silent */ }
-  }, [token, uploadFolder]);
+  }, [token]);
 
   const refreshCoupons = useCallback(async () => {
     try {
@@ -245,7 +244,7 @@ const AdminDashboard: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append("file", uploadFile);
-      const res = await fetch(`${API_BASE}/files/upload/${uploadFolder}`, {
+      const res = await fetch(`${API_BASE}/files/upload`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` },
         body: formData,
@@ -267,12 +266,11 @@ const AdminDashboard: React.FC = () => {
   const deleteImage = async (url: string) => {
     if (!confirm("Delete this image?")) return;
     try {
-      // Extract filename from URL: e.g. /uploads/products/filename.png
+      // Extract filename from S3 URL: e.g. https://bucket.s3.region.amazonaws.com/gallery/filename.png
       const parts = url.split("/");
       const filename = parts[parts.length - 1];
-      const folder = parts[parts.length - 2];
 
-      const res = await fetch(`${API_BASE}/files/${folder}/${filename}`, {
+      const res = await fetch(`${API_BASE}/files/${filename}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` },
       });
@@ -718,15 +716,6 @@ const AdminDashboard: React.FC = () => {
                     </h2>
 
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-medium mb-1 text-foreground/70">Folder</label>
-                        <select value={uploadFolder} onChange={e => { setUploadFolder(e.target.value); }}
-                          className="w-full px-4 py-2.5 rounded-xl bg-muted/50 border border-border focus:border-primary outline-none transition-all text-sm">
-                          <option value="products">Products</option>
-                          <option value="banners">Banners</option>
-                          <option value="profile">Profile</option>
-                        </select>
-                      </div>
 
                       <div>
                         <label className="block text-xs font-medium mb-1 text-foreground/70">Select Image</label>
@@ -775,7 +764,7 @@ const AdminDashboard: React.FC = () => {
                     {uploadedUrls.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <Image className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm">No images found in "{uploadFolder}"</p>
+                        <p className="text-sm">No images in gallery</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto">
