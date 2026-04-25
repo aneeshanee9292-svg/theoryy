@@ -4,6 +4,7 @@ import {
   Package, Upload, Image, Plus, Trash2, Edit3, RefreshCw, Tag, Percent,
   LogOut, Loader2, CheckCircle2, X, Save, ShoppingBag, BarChart3,
   ImagePlus, IndianRupee, Hash, FileText, AlertCircle, ToggleLeft, ToggleRight,
+  ClipboardList, Truck, ChevronDown, Filter,
 } from "lucide-react";
 
 import { API_BASE } from '@/config';
@@ -17,7 +18,7 @@ interface ProductType {
   imageUrl: string;
 }
 
-type TabKey = "products" | "upload" | "coupons" | "discounts";
+type TabKey = "products" | "upload" | "coupons" | "discounts" | "orders";
 
 const AdminDashboard: React.FC = () => {
   const token = localStorage.getItem("jwt");
@@ -60,6 +61,12 @@ const AdminDashboard: React.FC = () => {
 
   /* ── Toast ── */
   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success" | "error" });
+
+  /* ── Orders State ── */
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [orderFilter, setOrderFilter] = useState<string>("ALL");
+  const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ show: true, message, type });
@@ -114,12 +121,44 @@ const AdminDashboard: React.FC = () => {
     } catch { /* silent */ }
   }, [token]);
 
+  const refreshOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch { showToast("Failed to fetch orders", "error"); }
+    finally { setOrdersLoading(false); }
+  }, [token]);
+
+  const updateOrderStatus = async (orderId: number, newStatus: string) => {
+    setUpdatingOrderId(orderId);
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders/${orderId}/status?status=${newStatus}`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed");
+      showToast(`Order #${orderId} → ${newStatus}`);
+      refreshOrders();
+    } catch { showToast("Failed to update status", "error"); }
+    finally { setUpdatingOrderId(null); }
+  };
+
+  const filteredOrders = orders.filter(o => {
+    if (orderFilter === "ALL") return true;
+    return o.status === orderFilter;
+  });
+
   useEffect(() => {
     if (!token) { window.location.href = "/admin"; return; }
     refreshProducts();
     refreshUploadedImages();
     refreshCoupons();
     refreshDiscounts();
+    refreshOrders();
   }, [token, refreshProducts, refreshUploadedImages, refreshCoupons, refreshDiscounts]);
 
   /* ── Product CRUD ── */
@@ -416,6 +455,7 @@ const AdminDashboard: React.FC = () => {
     { key: "upload", label: "Images", icon: <Image className="w-4 h-4" /> },
     { key: "coupons", label: "Coupons", icon: <Tag className="w-4 h-4" /> },
     { key: "discounts", label: "Discounts", icon: <Percent className="w-4 h-4" /> },
+    { key: "orders", label: "Orders", icon: <ClipboardList className="w-4 h-4" /> },
   ];
 
   return (
@@ -1032,6 +1072,141 @@ const AdminDashboard: React.FC = () => {
                     )}
                   </div>
                 </div>
+              </motion.div>
+            )}
+            {/* ── ORDERS TAB ── */}
+            {activeTab === "orders" && (
+              <motion.div key="orders" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                {/* Header & Filter */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                  <h2 className="font-heading text-lg uppercase flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5 text-primary" />
+                    Orders ({filteredOrders.length})
+                  </h2>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Filter className="w-3.5 h-3.5" /> Filter:
+                    </div>
+                    {["ALL", "ORDER_PLACED", "PAYMENT_FAILED", "SHIPPED", "DELIVERED"].map(f => (
+                      <button key={f} onClick={() => setOrderFilter(f)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                          orderFilter === f
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}>
+                        {f === "ALL" ? "All" : f === "ORDER_PLACED" ? "Placed" : f === "PAYMENT_FAILED" ? "Failed" : f === "SHIPPED" ? "Shipped" : "Delivered"}
+                      </button>
+                    ))}
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={refreshOrders}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium hover:bg-muted/80 transition-all">
+                      <RefreshCw className={`w-3.5 h-3.5 ${ordersLoading ? "animate-spin" : ""}`} /> Refresh
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Orders List */}
+                {ordersLoading && orders.length === 0 ? (
+                  <div className="flex items-center justify-center py-20 text-muted-foreground">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading orders...
+                  </div>
+                ) : filteredOrders.length === 0 ? (
+                  <div className="text-center py-20 text-muted-foreground">
+                    <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p className="text-lg font-medium">No orders found</p>
+                    <p className="text-sm">{orderFilter !== "ALL" ? `No ${orderFilter.replace("_", " ").toLowerCase()} orders` : "No orders yet"}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredOrders.map(order => (
+                      <motion.div key={order.id} layout
+                        className="bg-card rounded-2xl border border-border p-5 sm:p-6 hover:border-primary/30 transition-all">
+                        {/* Order Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                              order.status === "ORDER_PLACED" || order.status === "DELIVERED" ? "bg-green-500/10 text-green-500"
+                                : order.status === "PAYMENT_FAILED" ? "bg-destructive/10 text-destructive"
+                                : order.status === "SHIPPED" ? "bg-blue-500/10 text-blue-500"
+                                : "bg-amber-500/10 text-amber-500"
+                            }`}>
+                              {order.status === "SHIPPED" ? <Truck className="w-5 h-5" /> : <ShoppingBag className="w-5 h-5" />}
+                            </div>
+                            <div>
+                              <p className="font-heading text-sm uppercase">Order #{order.id}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {order.createdAt ? new Date(order.createdAt).toLocaleString("en-IN") : ""}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {/* Status Badge */}
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              order.status === "ORDER_PLACED" ? "bg-green-500/10 text-green-500"
+                                : order.status === "DELIVERED" ? "bg-emerald-500/10 text-emerald-500"
+                                : order.status === "PAYMENT_FAILED" ? "bg-destructive/10 text-destructive"
+                                : order.status === "SHIPPED" ? "bg-blue-500/10 text-blue-500"
+                                : "bg-amber-500/10 text-amber-500"
+                            }`}>
+                              {order.status?.replace(/_/g, " ")}
+                            </span>
+                            {/* Status Update Dropdown */}
+                            <div className="relative">
+                              <select
+                                value={order.status}
+                                onChange={e => updateOrderStatus(order.id, e.target.value)}
+                                disabled={updatingOrderId === order.id}
+                                className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-muted/50 border border-border text-xs font-medium focus:border-primary outline-none cursor-pointer disabled:opacity-50"
+                              >
+                                {["ORDER_PLACED", "SHIPPED", "DELIVERED", "PAYMENT_FAILED"].map(s => (
+                                  <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Customer & Amount */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Customer</p>
+                            <p className="text-sm font-medium">{order.fullName || "N/A"}</p>
+                            <p className="text-xs text-muted-foreground">{order.email}</p>
+                            <p className="text-xs text-muted-foreground">{order.mobileNumber}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Address</p>
+                            <p className="text-xs text-muted-foreground">
+                              {[order.address, order.city, order.state, order.pincode].filter(Boolean).join(", ")}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Amount</p>
+                            <p className="text-lg font-bold text-primary">₹{order.finalAmount}</p>
+                            {order.discountAmount > 0 && (
+                              <p className="text-xs text-green-500">-₹{order.discountAmount} discount{order.couponCode ? ` (${order.couponCode})` : ""}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Order Items */}
+                        {order.items && order.items.length > 0 && (
+                          <div className="bg-muted/20 rounded-xl p-3">
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Items</p>
+                            <div className="space-y-1.5">
+                              {order.items.map((item: any) => (
+                                <div key={item.id} className="flex items-center justify-between text-xs">
+                                  <span className="text-foreground/80">{item.product?.name || "Product"} × {item.quantity}</span>
+                                  <span className="font-semibold">₹{item.finalPrice}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
