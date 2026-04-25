@@ -93,7 +93,7 @@ const AdminDashboard: React.FC = () => {
 
   const refreshUploadedImages = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/coupons/list/${uploadFolder}`, {
+      const res = await fetch(`${API_BASE}/files/list/${uploadFolder}`, {
         headers: { "Authorization": `Bearer ${token}` },
       });
       const data = await res.json();
@@ -245,7 +245,7 @@ const AdminDashboard: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append("file", uploadFile);
-      const res = await fetch(`${API_BASE}/coupons/upload/${uploadFolder}`, {
+      const res = await fetch(`${API_BASE}/files/upload/${uploadFolder}`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` },
         body: formData,
@@ -272,7 +272,7 @@ const AdminDashboard: React.FC = () => {
       const filename = parts[parts.length - 1];
       const folder = parts[parts.length - 2];
 
-      const res = await fetch(`${API_BASE}/coupons/${folder}/${filename}`, {
+      const res = await fetch(`${API_BASE}/files/${folder}/${filename}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` },
       });
