@@ -267,7 +267,7 @@ const AdminDashboard: React.FC = () => {
   const deleteImage = async (url: string) => {
     if (!confirm("Delete this image?")) return;
     try {
-      // Extract filename from URL: http://localhost:8081/uploads/products/filename.png
+      // Extract filename from URL: e.g. /uploads/products/filename.png
       const parts = url.split("/");
       const filename = parts[parts.length - 1];
       const folder = parts[parts.length - 2];
