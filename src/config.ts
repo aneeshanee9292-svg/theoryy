@@ -1,1 +1,1 @@
-export const API_BASE = "http://51.20.184.232:8081";
+export const API_BASE = "https://d1tj8ke0s4uodj.cloudfront.net";
