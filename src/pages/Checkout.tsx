@@ -732,6 +732,7 @@ const Checkout = () => {
                         <motion.button
                           whileTap={{ scale: 0.97 }}
                           onClick={() => goStep('review')}
+                          disabled={!phoneVerified}
                           className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-sm cta-glow hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                         >
                           Review & Pay
@@ -826,9 +827,11 @@ const Checkout = () => {
                             }}
                             placeholder="Enter coupon code"
                             disabled={couponApplied || validatingCoupon}
-                            className={`flex-1 px-4 py-3 rounded-xl bg-muted/50 border ${couponError ? 'border-destructive' : couponApplied ? 'border-green-500' : 'border-border'
-                              } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm uppercase tracking-wider font-mono ${couponApplied ? 'opacity-60' : ''
-                              }`}
+                            className={`flex-1 px-4 py-3 rounded-xl bg-muted/50 border ${
+                              couponError ? 'border-destructive' : couponApplied ? 'border-green-500' : 'border-border'
+                            } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm uppercase tracking-wider font-mono ${
+                              couponApplied ? 'opacity-60' : ''
+                            }`}
                           />
                           {couponApplied ? (
                             <button
