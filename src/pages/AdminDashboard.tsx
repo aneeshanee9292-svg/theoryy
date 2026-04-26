@@ -237,32 +237,38 @@ const AdminDashboard: React.FC = () => {
     } catch { showToast("Failed to update stock", "error"); }
   };
 
-  /* ── Image Upload ── */
+  /* ── Image Upload (via S3 pre-signed URL) ── */
   const handleUpload = async () => {
     if (!uploadFile) { showToast("Select a file first", "error"); return; }
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", uploadFile);
-      const res = await fetch(`${API_BASE}/files/upload`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}` },
-        body: formData,
-      });
-      const text = await res.text();
-      console.log("Upload response status:", res.status, "body:", text.substring(0, 500));
-      let data;
-      try { data = JSON.parse(text); } catch {
-        showToast("Upload failed: server returned HTML instead of JSON (check CloudFront)", "error");
+      // Step 1: Get pre-signed URL from backend (simple GET, no body)
+      const presignRes = await fetch(
+        `${API_BASE}/files/presign?filename=${encodeURIComponent(uploadFile.name)}&contentType=${encodeURIComponent(uploadFile.type)}`,
+        { headers: { "Authorization": `Bearer ${token}` } }
+      );
+      const presignData = await presignRes.json();
+      if (!presignData.success) {
+        showToast(presignData.message || "Failed to get upload URL", "error");
         return;
       }
-      if (data.success) {
-        setLastUploadedUrl(data.data);
+
+      const { uploadUrl, publicUrl } = presignData.data;
+
+      // Step 2: Upload file directly to S3 (bypasses CloudFront)
+      const s3Res = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": uploadFile.type },
+        body: uploadFile,
+      });
+
+      if (s3Res.ok) {
+        setLastUploadedUrl(publicUrl);
         showToast("Image uploaded successfully!");
         setUploadFile(null);
         refreshUploadedImages();
       } else {
-        showToast(data.message || "Upload failed", "error");
+        showToast("S3 upload failed: " + s3Res.statusText, "error");
       }
     } catch (err) { console.error("Upload error:", err); showToast("Upload failed: " + err, "error"); }
     finally { setUploading(false); }
