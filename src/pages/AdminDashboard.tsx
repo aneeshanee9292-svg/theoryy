@@ -249,7 +249,13 @@ const AdminDashboard: React.FC = () => {
         headers: { "Authorization": `Bearer ${token}` },
         body: formData,
       });
-      const data = await res.json();
+      const text = await res.text();
+      console.log("Upload response status:", res.status, "body:", text.substring(0, 500));
+      let data;
+      try { data = JSON.parse(text); } catch {
+        showToast("Upload failed: server returned HTML instead of JSON (check CloudFront)", "error");
+        return;
+      }
       if (data.success) {
         setLastUploadedUrl(data.data);
         showToast("Image uploaded successfully!");
@@ -258,7 +264,7 @@ const AdminDashboard: React.FC = () => {
       } else {
         showToast(data.message || "Upload failed", "error");
       }
-    } catch { showToast("Upload failed", "error"); }
+    } catch (err) { console.error("Upload error:", err); showToast("Upload failed: " + err, "error"); }
     finally { setUploading(false); }
   };
 
