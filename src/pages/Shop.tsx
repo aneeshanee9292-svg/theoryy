@@ -43,13 +43,13 @@ const Shop = () => {
           className="relative z-10 text-center px-4"
         >
           <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary font-medium mb-3">
-            Flavor Collection
+            Flavour Collection
           </p>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-heading uppercase mb-6">
             Explore Our <span className="text-gradient-brand">Products</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-xl mx-auto">
-            Discover our range of delicious, protein-packed flavors
+            Discover our range of delicious, protein-packed flavours
           </p>
         </motion.div>
       </div>
@@ -72,8 +72,8 @@ const Shop = () => {
                 key={filter.id}
                 onClick={() => setSelectedFilter(filter.id as any)}
                 className={`px-6 py-2 rounded-full font-medium transition-all ${selectedFilter === filter.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-border text-foreground hover:bg-border/80'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-border text-foreground hover:bg-border/80'
                   }`}
               >
                 {filter.label}
@@ -122,7 +122,7 @@ const Shop = () => {
               Ready to <span className="text-gradient-brand">Satisfy Your Craving?</span>
             </h2>
             <p className="text-gray-400 mb-8 text-lg">
-              Add any of our delicious flavors to your cart and enjoy free shipping on orders over ₹500
+              {/* Add any of our delicious flavours to your cart and enjoy free shipping on orders over ₹500 */}
             </p>
             <button
               onClick={() => navigate('/')}

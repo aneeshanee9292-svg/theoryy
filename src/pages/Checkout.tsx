@@ -606,8 +606,8 @@ const Checkout = () => {
                         Verify Your Identity
                       </h2>
                       <p className="text-muted-foreground text-sm mb-8 break-words">
-                        We’ll send a verification code to{' '}
-                        <strong className="break-all">{form.email}</strong> to confirm your order.
+                        We'll send a verification code to{' '}
+                        <strong className="break-words">{form.email}</strong> to confirm your order.
                       </p>
 
                       <div className="space-y-8">
@@ -629,7 +629,7 @@ const Checkout = () => {
                               </div>
                               <div>
                                 <p className="text-sm font-semibold">Email Verification</p>
-                                <p className="text-xs text-muted-foreground break-all">{form.email}</p>
+                                <p className="text-xs text-muted-foreground break-words">{form.email}</p>
                               </div>
                             </div>
                             {phoneVerified && (
@@ -816,7 +816,7 @@ const Checkout = () => {
                           <Tag className="w-4 h-4" />
                           Apply Coupon
                         </h3>
-                        <div className="flex gap-2">
+                        <div className="space-y-3">
                           <input
                             type="text"
                             value={couponCode}
@@ -826,7 +826,7 @@ const Checkout = () => {
                             }}
                             placeholder="Enter coupon code"
                             disabled={couponApplied || validatingCoupon}
-                            className={`flex-1 px-4 py-3 rounded-xl bg-muted/50 border ${
+                            className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${
                               couponError ? 'border-destructive' : couponApplied ? 'border-green-500' : 'border-border'
                             } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm uppercase tracking-wider font-mono ${
                               couponApplied ? 'opacity-60' : ''
@@ -841,7 +841,7 @@ const Checkout = () => {
                                 setCouponDiscount(0);
                                 setCouponMessage('');
                               }}
-                              className="px-5 py-3 rounded-xl bg-destructive/10 text-destructive font-semibold text-sm hover:bg-destructive/20 transition-all"
+                              className="w-full py-3 rounded-xl bg-destructive/10 text-destructive font-semibold text-sm hover:bg-destructive/20 transition-all"
                             >
                               Remove
                             </button>
@@ -874,7 +874,7 @@ const Checkout = () => {
                                   setValidatingCoupon(false);
                                 }
                               }}
-                              className="px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-60 flex items-center gap-2"
+                              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                             >
                               {validatingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                               Apply
