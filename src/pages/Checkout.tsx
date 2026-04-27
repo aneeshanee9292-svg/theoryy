@@ -605,8 +605,9 @@ const Checkout = () => {
                         <Shield className="w-5 h-5 text-primary" />
                         Verify Your Identity
                       </h2>
-                      <p className="text-muted-foreground text-sm mb-8">
-                        We’ll send a verification code to <strong>{form.email}</strong> to confirm your order.
+                      <p className="text-muted-foreground text-sm mb-8 break-words">
+                        We’ll send a verification code to{' '}
+                        <strong className="break-all">{form.email}</strong> to confirm your order.
                       </p>
 
                       <div className="space-y-8">
@@ -628,7 +629,7 @@ const Checkout = () => {
                               </div>
                               <div>
                                 <p className="text-sm font-semibold">Email Verification</p>
-                                <p className="text-xs text-muted-foreground">{form.email}</p>
+                                <p className="text-xs text-muted-foreground break-all">{form.email}</p>
                               </div>
                             </div>
                             {phoneVerified && (
@@ -658,27 +659,17 @@ const Checkout = () => {
                                 </motion.button>
                               ) : (
                                 <div className="space-y-3">
-                                  <div className="flex gap-3">
-                                    <input
-                                      type="text"
-                                      value={phoneOTPInput}
-                                      onChange={(e) => {
-                                        setPhoneOTPInput(e.target.value.replace(/\D/g, '').slice(0, 6));
-                                        setPhoneOTPError('');
-                                      }}
-                                      placeholder="Enter 4-digit OTP"
-                                      maxLength={6}
-                                      className="flex-1 px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm text-center tracking-[0.3em] font-mono"
-                                    />
-                                    <motion.button
-                                      whileTap={{ scale: 0.97 }}
-                                      onClick={verifyPhoneOTP}
-                                      disabled={phoneOTPInput.length < 4}
-                                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-50 hover:brightness-110 transition-all"
-                                    >
-                                      Verify
-                                    </motion.button>
-                                  </div>
+                                  <input
+                                    type="text"
+                                    value={phoneOTPInput}
+                                    onChange={(e) => {
+                                      setPhoneOTPInput(e.target.value.replace(/\D/g, '').slice(0, 6));
+                                      setPhoneOTPError('');
+                                    }}
+                                    placeholder="Enter 4-digit OTP"
+                                    maxLength={6}
+                                    className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm text-center tracking-[0.3em] font-mono"
+                                  />
                                   {phoneOTPError && (
                                     <p className="text-destructive text-xs">{phoneOTPError}</p>
                                   )}
@@ -694,6 +685,14 @@ const Checkout = () => {
                                       </button>
                                     )}
                                   </p>
+                                  <motion.button
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={verifyPhoneOTP}
+                                    disabled={phoneOTPInput.length < 4}
+                                    className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-50 hover:brightness-110 transition-all"
+                                  >
+                                    Verify
+                                  </motion.button>
                                 </div>
                               )}
                             </>
@@ -733,7 +732,7 @@ const Checkout = () => {
                           whileTap={{ scale: 0.97 }}
                           onClick={() => goStep('review')}
                           disabled={!phoneVerified}
-                          className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-sm cta-glow hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                          className="flex items-center gap-2 px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-xs sm:text-sm cta-glow hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                         >
                           Review & Pay
                           <ArrowRight className="w-4 h-4" />
@@ -926,7 +925,7 @@ const Checkout = () => {
                           whileTap={{ scale: 0.97 }}
                           onClick={handlePayment}
                           disabled={paying}
-                          className="flex items-center gap-2 px-10 py-4 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-sm cta-glow hover:brightness-110 transition-all disabled:opacity-60 animate-pulse-glow"
+                          className="flex items-center gap-2 px-5 py-2.5 sm:px-10 sm:py-4 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wider text-xs sm:text-sm cta-glow hover:brightness-110 transition-all disabled:opacity-60 animate-pulse-glow"
                         >
                           {paying ? (
                             <>
