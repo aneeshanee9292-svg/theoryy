@@ -4,7 +4,8 @@ import {
   Package, Upload, Image, Plus, Trash2, Edit3, RefreshCw, Tag, Percent,
   LogOut, Loader2, CheckCircle2, X, Save, ShoppingBag, BarChart3,
   ImagePlus, IndianRupee, Hash, FileText, AlertCircle, ToggleLeft, ToggleRight,
-  ClipboardList, Truck, ChevronDown, Filter,
+  ClipboardList, Truck, ChevronDown, Filter, Calendar, Mail, ArrowUpDown,
+  CheckSquare, Square, Send, Clock, Power,
 } from "lucide-react";
 
 import { API_BASE } from '@/config';
@@ -66,6 +67,22 @@ const AdminDashboard: React.FC = () => {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderFilter, setOrderFilter] = useState<string>("ALL");
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+
+  /* ── Date Filter & Sort ── */
+  const [dateFilter, setDateFilter] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
+
+  /* ── Mass Selection & Status Change ── */
+  const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
+  const [massStatus, setMassStatus] = useState<string>("SHIPPED");
+  const [applyingMassStatus, setApplyingMassStatus] = useState(false);
+
+  /* ── Mail Trigger Controls ── */
+  const [sendingMail, setSendingMail] = useState(false);
+  const [retriggerDates, setRetriggerDates] = useState<string>("");
+  const [retriggeringMail, setRetriggeringMail] = useState(false);
+  const [dailyMailEnabled, setDailyMailEnabled] = useState(true);
+  const [togglingDailyMail, setTogglingDailyMail] = useState(false);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ show: true, message, type });
@@ -146,10 +163,117 @@ const AdminDashboard: React.FC = () => {
     finally { setUpdatingOrderId(null); }
   };
 
-  const filteredOrders = orders.filter(o => {
-    if (orderFilter === "ALL") return true;
-    return o.status === orderFilter;
-  });
+  const filteredOrders = orders
+    .filter(o => {
+      if (orderFilter !== "ALL" && o.status !== orderFilter) return false;
+      if (dateFilter) {
+        const orderDate = o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '';
+        if (orderDate !== dateFilter) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return sortDirection === "desc" ? dateB - dateA : dateA - dateB;
+    });
+
+  /* ── Mass Selection Helpers ── */
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrders.size === filteredOrders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(filteredOrders.map((o: any) => o.id)));
+    }
+  };
+
+  const applyMassStatusChange = async () => {
+    if (selectedOrders.size === 0) { showToast("Select orders first", "error"); return; }
+    setApplyingMassStatus(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders/bulk-status`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          orderIds: Array.from(selectedOrders),
+          status: massStatus
+        })
+      });
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      showToast(data.message || `${selectedOrders.size} orders updated`);
+      setSelectedOrders(new Set());
+      refreshOrders();
+    } catch { showToast("Failed to update orders", "error"); }
+    finally { setApplyingMassStatus(false); }
+  };
+
+  /* ── Mail Trigger Helpers ── */
+  const sendMailNow = async () => {
+    setSendingMail(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/reports/daily/trigger-today`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed");
+      showToast("Mail sent successfully!");
+    } catch { showToast("Failed to send mail", "error"); }
+    finally { setSendingMail(false); }
+  };
+
+  const retriggerMail = async () => {
+    if (!retriggerDates) { showToast("Select a date first", "error"); return; }
+    setRetriggeringMail(true);
+    try {
+      const dates = retriggerDates.split(",").map(d => d.trim()).filter(Boolean);
+      for (const date of dates) {
+        const res = await fetch(`${API_BASE}/admin/reports/daily/trigger/${date}`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`Failed for date: ${date}`);
+      }
+      showToast(`Mail retriggered for ${dates.length} date(s)`);
+      setRetriggerDates("");
+    } catch (e: any) { showToast(e.message || "Failed to retrigger mail", "error"); }
+    finally { setRetriggeringMail(false); }
+  };
+
+  const fetchDailyMailStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/reports/daily-mail/status`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setDailyMailEnabled(data.enabled ?? true);
+    } catch { /* silent */ }
+  }, [token]);
+
+  const toggleDailyMail = async () => {
+    setTogglingDailyMail(true);
+    try {
+      const newState = !dailyMailEnabled;
+      const res = await fetch(`${API_BASE}/admin/reports/daily-mail/toggle`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ enabled: newState })
+      });
+      if (!res.ok) throw new Error("Failed");
+      setDailyMailEnabled(newState);
+      showToast(`Daily mail ${newState ? "enabled" : "disabled"}`);
+    } catch { showToast("Failed to toggle daily mail", "error"); }
+    finally { setTogglingDailyMail(false); }
+  };
 
   useEffect(() => {
     if (!token) { window.location.href = "/admin"; return; }
@@ -158,7 +282,8 @@ const AdminDashboard: React.FC = () => {
     refreshCoupons();
     refreshDiscounts();
     refreshOrders();
-  }, [token, refreshProducts, refreshUploadedImages, refreshCoupons, refreshDiscounts]);
+    fetchDailyMailStatus();
+  }, [token, refreshProducts, refreshUploadedImages, refreshCoupons, refreshDiscounts, fetchDailyMailStatus]);
 
   /* ── Product CRUD ── */
   const handleProductChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -1078,31 +1203,134 @@ const AdminDashboard: React.FC = () => {
             {/* ── ORDERS TAB ── */}
             {activeTab === "orders" && (
               <motion.div key="orders" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                {/* Header & Filter */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                  <h2 className="font-heading text-lg uppercase flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5 text-primary" />
-                    Orders ({filteredOrders.length})
-                  </h2>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Filter className="w-3.5 h-3.5" /> Filter:
+
+                {/* ── Mail Trigger Controls Panel ── */}
+                <div className="bg-card rounded-2xl border border-border p-5 mb-6">
+                  <h3 className="font-heading text-sm uppercase mb-4 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-primary" /> Mail Controls
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Send Mail Now */}
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={sendMailNow} disabled={sendingMail}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:brightness-110 transition-all disabled:opacity-50">
+                      {sendingMail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                      Send Mail Now
+                    </motion.button>
+
+                    {/* Retrigger Mail */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={retriggerDates}
+                        onChange={e => setRetriggerDates(e.target.value)}
+                        className="px-3 py-2 rounded-lg bg-muted/50 border border-border text-xs focus:border-primary outline-none"
+                      />
+                      <motion.button whileTap={{ scale: 0.95 }} onClick={retriggerMail} disabled={retriggeringMail || !retriggerDates}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-all disabled:opacity-50">
+                        {retriggeringMail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
+                        Retrigger Mail
+                      </motion.button>
                     </div>
-                    {["ALL", "ORDER_PLACED", "PAYMENT_FAILED", "SHIPPED", "DELIVERED"].map(f => (
-                      <button key={f} onClick={() => setOrderFilter(f)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                          orderFilter === f
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        }`}>
-                        {f === "ALL" ? "All" : f === "ORDER_PLACED" ? "Placed" : f === "PAYMENT_FAILED" ? "Failed" : f === "SHIPPED" ? "Shipped" : "Delivered"}
+
+                    {/* Daily Mail Toggle */}
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={toggleDailyMail} disabled={togglingDailyMail}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all disabled:opacity-50 ${
+                        dailyMailEnabled
+                          ? "bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                          : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                      }`}>
+                      {togglingDailyMail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
+                        dailyMailEnabled ? <Power className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
+                      Daily Mail: {dailyMailEnabled ? "ON" : "OFF"}
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Header & Filters */}
+                <div className="flex flex-col gap-4 mb-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <h2 className="font-heading text-lg uppercase flex items-center gap-2">
+                      <ClipboardList className="w-5 h-5 text-primary" />
+                      Orders ({filteredOrders.length})
+                    </h2>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Filter className="w-3.5 h-3.5" /> Status:
+                      </div>
+                      {["ALL", "ORDER_PLACED", "PAYMENT_FAILED", "SHIPPED", "DELIVERED"].map(f => (
+                        <button key={f} onClick={() => { setOrderFilter(f); setSelectedOrders(new Set()); }}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                            orderFilter === f
+                              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}>
+                          {f === "ALL" ? "All" : f === "ORDER_PLACED" ? "Placed" : f === "PAYMENT_FAILED" ? "Failed" : f === "SHIPPED" ? "Shipped" : "Delivered"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Date filter + Sort + Refresh row */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="w-3.5 h-3.5" /> Date:
+                    </div>
+                    <input
+                      type="date"
+                      value={dateFilter}
+                      onChange={e => { setDateFilter(e.target.value); setSelectedOrders(new Set()); }}
+                      className="px-3 py-1.5 rounded-lg bg-muted/50 border border-border text-xs focus:border-primary outline-none"
+                    />
+                    {dateFilter && (
+                      <button onClick={() => setDateFilter("")}
+                        className="px-2 py-1 rounded-lg bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 transition-all">
+                        <X className="w-3.5 h-3.5" />
                       </button>
-                    ))}
+                    )}
+                    <button onClick={() => setSortDirection(d => d === "desc" ? "asc" : "desc")}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium hover:bg-muted/80 transition-all">
+                      <ArrowUpDown className="w-3.5 h-3.5" />
+                      {sortDirection === "desc" ? "Newest First" : "Oldest First"}
+                    </button>
                     <motion.button whileTap={{ scale: 0.95 }} onClick={refreshOrders}
                       className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium hover:bg-muted/80 transition-all">
                       <RefreshCw className={`w-3.5 h-3.5 ${ordersLoading ? "animate-spin" : ""}`} /> Refresh
                     </motion.button>
                   </div>
+
+                  {/* Mass Status Change Bar */}
+                  {filteredOrders.length > 0 && (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border flex-wrap">
+                      <button onClick={toggleSelectAll}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-all">
+                        {selectedOrders.size === filteredOrders.length && filteredOrders.length > 0
+                          ? <CheckSquare className="w-3.5 h-3.5" />
+                          : <Square className="w-3.5 h-3.5" />}
+                        {selectedOrders.size === filteredOrders.length && filteredOrders.length > 0 ? "Deselect All" : "Select All"}
+                      </button>
+                      {selectedOrders.size > 0 && (
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            {selectedOrders.size} selected →
+                          </span>
+                          <div className="relative">
+                            <select value={massStatus} onChange={e => setMassStatus(e.target.value)}
+                              className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-muted/50 border border-border text-xs font-medium focus:border-primary outline-none">
+                              {["ORDER_PLACED", "SHIPPED", "DELIVERED", "PAYMENT_FAILED"].map(s => (
+                                <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                          </div>
+                          <motion.button whileTap={{ scale: 0.95 }} onClick={applyMassStatusChange} disabled={applyingMassStatus}
+                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold hover:brightness-110 transition-all disabled:opacity-50">
+                            {applyingMassStatus ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                            Apply
+                          </motion.button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Orders List */}
@@ -1114,16 +1342,25 @@ const AdminDashboard: React.FC = () => {
                   <div className="text-center py-20 text-muted-foreground">
                     <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-30" />
                     <p className="text-lg font-medium">No orders found</p>
-                    <p className="text-sm">{orderFilter !== "ALL" ? `No ${orderFilter.replace("_", " ").toLowerCase()} orders` : "No orders yet"}</p>
+                    <p className="text-sm">{orderFilter !== "ALL" ? `No ${orderFilter.replace("_", " ").toLowerCase()} orders` : dateFilter ? `No orders on ${dateFilter}` : "No orders yet"}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {filteredOrders.map(order => (
                       <motion.div key={order.id} layout
-                        className="bg-card rounded-2xl border border-border p-5 sm:p-6 hover:border-primary/30 transition-all">
+                        className={`bg-card rounded-2xl border p-5 sm:p-6 hover:border-primary/30 transition-all ${
+                          selectedOrders.has(order.id) ? "border-primary/50 ring-2 ring-primary/20" : "border-border"
+                        }`}>
                         {/* Order Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                           <div className="flex items-center gap-3">
+                            {/* Checkbox */}
+                            <button onClick={() => toggleOrderSelection(order.id)}
+                              className="flex-shrink-0 text-muted-foreground hover:text-primary transition-colors">
+                              {selectedOrders.has(order.id)
+                                ? <CheckSquare className="w-5 h-5 text-primary" />
+                                : <Square className="w-5 h-5" />}
+                            </button>
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                               order.status === "ORDER_PLACED" || order.status === "DELIVERED" ? "bg-green-500/10 text-green-500"
                                 : order.status === "PAYMENT_FAILED" ? "bg-destructive/10 text-destructive"
@@ -1184,6 +1421,9 @@ const AdminDashboard: React.FC = () => {
                           <div className="space-y-1">
                             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Amount</p>
                             <p className="text-lg font-bold text-primary">₹{order.finalAmount}</p>
+                            {order.shippingCharge != null && order.shippingCharge > 0 && (
+                              <p className="text-xs text-muted-foreground">+₹{order.shippingCharge} shipping</p>
+                            )}
                             {order.discountAmount > 0 && (
                               <p className="text-xs text-green-500">-₹{order.discountAmount} discount{order.couponCode ? ` (${order.couponCode})` : ""}</p>
                             )}

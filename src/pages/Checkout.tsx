@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,10 +15,13 @@ import {
   Loader2,
   ShoppingBag,
   Tag,
+  Truck,
+  ChevronDown,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { getStates, getCitiesByState } from '@/data/indianStatesAndCities';
 
 import { API_BASE } from '@/config';
 
@@ -94,9 +97,25 @@ const Checkout = () => {
     };
   }, []);
 
+  /* ── shipping charge ── */
+  const SHIPPING_THRESHOLD = 500;
+  const SHIPPING_CHARGE = 49;
+  const subtotal = totalPrice();
+  const shippingCharge = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
+
+  /* ── state/city helpers ── */
+  const statesList = useMemo(() => getStates(), []);
+  const citiesList = useMemo(() => getCitiesByState(form.state), [form.state]);
+
   /* ── helpers ── */
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === 'state') {
+      // Reset city when state changes
+      setForm((prev) => ({ ...prev, state: value, city: '' }));
+      setErrors((prev) => ({ ...prev, state: '', city: '' }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormData]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
@@ -519,40 +538,53 @@ const Checkout = () => {
                           )}
                         </div>
 
-                        {/* City, State, Pincode */}
+                        {/* State, City, Pincode */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                          <div>
-                            <label className="block text-sm font-medium mb-1.5 text-foreground/80">
-                              City
-                            </label>
-                            <input
-                              type="text"
-                              name="city"
-                              value={form.city}
-                              onChange={handleChange}
-                              placeholder="City"
-                              className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${errors.city ? 'border-destructive' : 'border-border'
-                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
-                            />
-                            {errors.city && (
-                              <p className="text-destructive text-xs mt-1">{errors.city}</p>
-                            )}
-                          </div>
                           <div>
                             <label className="block text-sm font-medium mb-1.5 text-foreground/80">
                               State
                             </label>
-                            <input
-                              type="text"
-                              name="state"
-                              value={form.state}
-                              onChange={handleChange}
-                              placeholder="State"
-                              className={`w-full px-4 py-3 rounded-xl bg-muted/50 border ${errors.state ? 'border-destructive' : 'border-border'
-                                } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm`}
-                            />
+                            <div className="relative">
+                              <select
+                                name="state"
+                                value={form.state}
+                                onChange={handleChange}
+                                className={`w-full appearance-none px-4 py-3 rounded-xl bg-muted/50 border ${errors.state ? 'border-destructive' : 'border-border'
+                                  } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm pr-10`}
+                              >
+                                <option value="">Select State</option>
+                                {statesList.map((s) => (
+                                  <option key={s} value={s}>{s}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                            </div>
                             {errors.state && (
                               <p className="text-destructive text-xs mt-1">{errors.state}</p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1.5 text-foreground/80">
+                              City
+                            </label>
+                            <div className="relative">
+                              <select
+                                name="city"
+                                value={form.city}
+                                onChange={handleChange}
+                                disabled={!form.state}
+                                className={`w-full appearance-none px-4 py-3 rounded-xl bg-muted/50 border ${errors.city ? 'border-destructive' : 'border-border'
+                                  } focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm pr-10 disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                <option value="">{form.state ? 'Select City' : 'Select state first'}</option>
+                                {citiesList.map((c) => (
+                                  <option key={c} value={c}>{c}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                            </div>
+                            {errors.city && (
+                              <p className="text-destructive text-xs mt-1">{errors.city}</p>
                             )}
                           </div>
                           <div>
@@ -896,7 +928,7 @@ const Checkout = () => {
                       <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6 space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">Subtotal</span>
-                          <span>₹{totalPrice()}</span>
+                          <span>₹{subtotal}</span>
                         </div>
                         {couponApplied && couponDiscount > 0 && (
                           <div className="flex items-center justify-between text-sm">
@@ -906,9 +938,19 @@ const Checkout = () => {
                             <span className="text-green-500 font-medium">-₹{couponDiscount}</span>
                           </div>
                         )}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Truck className="w-3.5 h-3.5" /> Shipping
+                          </span>
+                          {shippingCharge === 0 ? (
+                            <span className="text-green-500 font-medium">Free</span>
+                          ) : (
+                            <span>₹{shippingCharge}</span>
+                          )}
+                        </div>
                         <div className="flex items-center justify-between pt-1 border-t border-border">
                           <span className="font-heading text-lg uppercase">Total</span>
-                          <span className="text-2xl font-bold text-primary">₹{Math.max(0, totalPrice() - couponDiscount)}</span>
+                          <span className="text-2xl font-bold text-primary">₹{Math.max(0, subtotal - couponDiscount + shippingCharge)}</span>
                         </div>
                       </div>
 
@@ -935,7 +977,7 @@ const Checkout = () => {
                           ) : (
                             <>
                               <CreditCard className="w-4 h-4" />
-                              Pay ₹{Math.max(0, totalPrice() - couponDiscount)}
+                              Pay ₹{Math.max(0, subtotal - couponDiscount + shippingCharge)}
                             </>
                           )}
                         </motion.button>
@@ -979,12 +1021,21 @@ const Checkout = () => {
                 <div className="border-t border-border pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>₹{totalPrice()}</span>
+                    <span>₹{subtotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-green-500 font-medium">Free</span>
+                    {shippingCharge === 0 ? (
+                      <span className="text-green-500 font-medium">Free</span>
+                    ) : (
+                      <span>₹{shippingCharge}</span>
+                    )}
                   </div>
+                  {shippingCharge === 0 && (
+                    <div className="text-xs text-green-500/80 flex items-center gap-1">
+                      <Truck className="w-3 h-3" /> Free shipping on orders ≥ ₹{SHIPPING_THRESHOLD}
+                    </div>
+                  )}
                   {couponApplied && couponDiscount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-green-500">Coupon</span>
@@ -994,7 +1045,7 @@ const Checkout = () => {
                   <div className="border-t border-border pt-3 flex justify-between">
                     <span className="font-heading text-base uppercase">Total</span>
                     <span className="text-xl font-bold text-primary">
-                      ₹{Math.max(0, totalPrice() - couponDiscount)}
+                      ₹{Math.max(0, subtotal - couponDiscount + shippingCharge)}
                     </span>
                   </div>
                 </div>
